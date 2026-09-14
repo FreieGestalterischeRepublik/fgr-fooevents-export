@@ -392,18 +392,21 @@ class FGR_FE_Data {
 	 * "revenue_net" ist der ECHTE Netto-Umsatz aus der Bestellposition
 	 * (Positionssumme ./. Menge) – nicht der Brutto-Ticketpreis aus
 	 * WooCommerceEventsPrice, der inkl. MwSt. ist.
+	 * "list_price_net" ist der aktuelle Netto-Verkaufspreis des Produkts
+	 * (für die Umsatz-Potenzial-Schätzung der noch freien Plätze).
 	 *
 	 * @param int[] $product_ids
-	 * @return array product_id => stdClass{sold, free, revenue_net}
+	 * @return array product_id => stdClass{sold, free, revenue_net, list_price_net}
 	 */
 	public static function get_product_stats( array $product_ids ) {
 		$stats = array();
 		foreach ( $product_ids as $product_id ) {
-			$product         = wc_get_product( $product_id );
+			$product               = wc_get_product( $product_id );
 			$stats[ $product_id ] = (object) array(
-				'sold'        => 0,
-				'free'        => $product ? max( 0, (int) $product->get_stock_quantity() ) : 0,
-				'revenue_net' => 0.0,
+				'sold'           => 0,
+				'free'           => $product ? max( 0, (int) $product->get_stock_quantity() ) : 0,
+				'revenue_net'    => 0.0,
+				'list_price_net' => $product ? (float) wc_get_price_excluding_tax( $product ) : 0.0,
 			);
 		}
 

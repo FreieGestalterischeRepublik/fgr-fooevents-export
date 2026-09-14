@@ -61,18 +61,28 @@ class FGR_FE_Dashboard_Widget {
 		$stats = FGR_FE_Data::get_product_stats( $stats_product_ids );
 
 		$month_totals = (object) array(
-			'sold'    => 0,
-			'free'    => 0,
-			'revenue' => 0.0,
+			'sold'      => 0,
+			'free'      => 0,
+			'revenue'   => 0.0,
+			'potential' => 0.0,
 		);
 		foreach ( $month_products as $product ) {
 			if ( ! isset( $stats[ $product->id ] ) ) {
 				continue;
 			}
-			$month_totals->sold    += $stats[ $product->id ]->sold;
-			$month_totals->free    += $stats[ $product->id ]->free;
-			$month_totals->revenue += $stats[ $product->id ]->revenue_net;
+			$product_stats = $stats[ $product->id ];
+
+			$month_totals->sold      += $product_stats->sold;
+			$month_totals->free      += $product_stats->free;
+			$month_totals->revenue   += $product_stats->revenue_net;
+			// Potenzial rechnet mit dem aktuellen Verkaufspreis je Kurs, nicht mit
+			// einem pauschalen Monats-Durchschnitt – unterschiedliche Kurse kosten
+			// unterschiedlich viel.
+			$month_totals->potential += $product_stats->free * $product_stats->list_price_net;
 		}
+
+		$month_totals->avg_sold_price      = $month_totals->sold > 0 ? $month_totals->revenue / $month_totals->sold : 0.0;
+		$month_totals->avg_potential_price = $month_totals->free > 0 ? $month_totals->potential / $month_totals->free : 0.0;
 
 		$month_label = date_i18n( 'F Y', $now );
 
