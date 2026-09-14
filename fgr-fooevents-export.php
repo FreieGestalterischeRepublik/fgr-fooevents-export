@@ -1,19 +1,23 @@
 <?php
 /**
- * Plugin Name: FGR FooEventsExport
- * Description: Admin-Übersicht aller FooEvents-Kochkurse, gruppiert nach Kurs-Datum, mit Filtern und CSV-Export.
- * Version: 1.7.0
- * Author: FGR
- * Text Domain: fgr-fooevents-export
+ * Plugin Name:  FGR FooEventsExport
+ * Description:  Ein Plugin der Freien Gestalterischen Republik. Admin-Übersicht aller FooEvents-Kochkurse, gruppiert nach Kurs-Datum, mit Filtern und Excel-/CSV-Export.
+ * Version:      1.7.1
+ * Author:       Freie Gestalterische Republik
+ * Author URI:   https://fgr.design
+ * License:      GPL-2.0-or-later
+ * Requires PHP: 7.4
+ * Requires at least: 6.0
+ * Text Domain:  fgr-fooevents-export
  * Requires Plugins: woocommerce
- * Update URI: https://github.com/FreieGestalterischeRepublik/fgr-fooevents-export
+ * Update URI:   https://github.com/FreieGestalterischeRepublik/fgr-fooevents-export
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'FGR_FE_VERSION', '1.7.0' );
+define( 'FGR_FE_VERSION', '1.7.1' );
 define( 'FGR_FE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'FGR_FE_URL', plugin_dir_url( __FILE__ ) );
 define( 'FGR_FE_GITHUB_REPO', 'https://github.com/FreieGestalterischeRepublik/fgr-fooevents-export' );
