@@ -381,4 +381,116 @@ class FGR_FE_Data {
 
 		return $rows;
 	}
+
+	/**
+	 * Verkaufs-/Umsatzstatistik je Kurs-Produkt fürs Dashboard-Widget.
+	 *
+	 * "Verkauft" zählt keine Tickets mit Checkin-Status "Canceled" und keine
+	 * Tickets, deren Bestellung storniert/rückerstattet/fehlgeschlagen ist.
+	 * "Frei" ist der aktuelle WooCommerce-Lagerbestand (FooEvents zieht jeden
+	 * gültigen Verkauf automatisch davon ab).
+	 * "revenue_net" ist der ECHTE Netto-Umsatz aus der Bestellposition
+	 * (Positionssumme ./. Menge) – nicht der Brutto-Ticketpreis aus
+	 * WooCommerceEventsPrice, der inkl. MwSt. ist.
+	 *
+	 * @param int[] $product_ids
+	 * @return array product_id => stdClass{sold, free, revenue_net}
+	 */
+	public static function get_product_stats( array $product_ids ) {
+		$stats = array();
+		foreach ( $product_ids as $product_id ) {
+			$product         = wc_get_product( $product_id );
+			$stats[ $product_id ] = (object) array(
+				'sold'        => 0,
+				'free'        => $product ? max( 0, (int) $product->get_stock_quantity() ) : 0,
+				'revenue_net' => 0.0,
+			);
+		}
+
+		if ( empty( $product_ids ) ) {
+			return $stats;
+		}
+
+		$ticket_query = new WP_Query(
+			array(
+				'post_type'      => 'event_magic_tickets',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_query'     => array(
+					array(
+						'key'     => 'WooCommerceEventsProductID',
+						'value'   => $product_ids,
+						'compare' => 'IN',
+					),
+				),
+			)
+		);
+
+		$ticket_ids = $ticket_query->posts;
+		if ( empty( $ticket_ids ) ) {
+			return $stats;
+		}
+
+		update_meta_cache( 'post', $ticket_ids );
+
+		$tickets_by_order = array();
+		$order_ids        = array();
+
+		foreach ( $ticket_ids as $ticket_id ) {
+			$checkin = get_post_meta( $ticket_id, 'WooCommerceEventsStatus', true );
+			if ( 'Canceled' === $checkin ) {
+				continue;
+			}
+
+			$order_id   = (int) get_post_meta( $ticket_id, 'WooCommerceEventsOrderID', true );
+			$product_id = (int) get_post_meta( $ticket_id, 'WooCommerceEventsProductID', true );
+
+			$tickets_by_order[ $order_id ][] = $product_id;
+			if ( $order_id ) {
+				$order_ids[ $order_id ] = $order_id;
+			}
+		}
+
+		if ( empty( $order_ids ) ) {
+			return $stats;
+		}
+
+		$orders = array();
+		foreach ( wc_get_orders( array( 'id' => array_values( $order_ids ), 'limit' => -1 ) ) as $order ) {
+			$orders[ $order->get_id() ] = $order;
+		}
+
+		$excluded_order_statuses = array( 'cancelled', 'refunded', 'failed' );
+
+		foreach ( $tickets_by_order as $order_id => $product_ids_in_order ) {
+			$order = isset( $orders[ $order_id ] ) ? $orders[ $order_id ] : null;
+			if ( ! $order || in_array( $order->get_status(), $excluded_order_statuses, true ) ) {
+				continue;
+			}
+
+			// Netto-Preis pro Ticket: Bestellposition (netto) je Produkt, geteilt
+			// durch deren Menge (ein Ticket entspricht keiner eigenen Order-Item-ID).
+			$item_net_per_unit = array();
+			foreach ( $order->get_items() as $item ) {
+				$qty = $item->get_quantity();
+				if ( $qty > 0 ) {
+					$item_net_per_unit[ $item->get_product_id() ] = (float) $item->get_total() / $qty;
+				}
+			}
+
+			foreach ( $product_ids_in_order as $product_id ) {
+				if ( ! isset( $stats[ $product_id ] ) ) {
+					continue;
+				}
+				++$stats[ $product_id ]->sold;
+				if ( isset( $item_net_per_unit[ $product_id ] ) ) {
+					$stats[ $product_id ]->revenue_net += $item_net_per_unit[ $product_id ];
+				}
+			}
+		}
+
+		return $stats;
+	}
 }
