@@ -62,18 +62,26 @@ class FGR_FE_Admin {
 		return in_array( $value, self::PER_PAGE_OPTIONS, true ) ? $value : self::DEFAULT_PER_PAGE;
 	}
 
+	/**
+	 * Baut die Export-URL. Übernimmt nur den oberen Monats-/Kurs-Filter –
+	 * absichtlich ohne "paged"/"fgr_fe_per_page", da der Export unabhängig
+	 * von der Paginierung immer alle gefilterten Zeilen liefern soll.
+	 */
 	private static function build_export_url( array $filters, $format ) {
+		$args = array(
+			'action' => 'fgr_fe_export',
+			'format' => $format,
+		);
+
+		if ( ! empty( $filters['month'] ) ) {
+			$args['fgr_fe_month'] = $filters['month'];
+		}
+		if ( ! empty( $filters['course'] ) ) {
+			$args['fgr_fe_course'] = $filters['course'];
+		}
+
 		return wp_nonce_url(
-			add_query_arg(
-				array_merge(
-					array(
-						'action' => 'fgr_fe_export',
-						'format' => $format,
-					),
-					array_filter( $filters )
-				),
-				admin_url( 'admin-post.php' )
-			),
+			add_query_arg( $args, admin_url( 'admin-post.php' ) ),
 			'fgr_fe_export',
 			'fgr_fe_nonce'
 		);
