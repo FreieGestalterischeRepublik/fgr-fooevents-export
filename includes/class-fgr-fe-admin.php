@@ -10,7 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class FGR_FE_Admin {
 
 	const PAGE_SLUG = 'fgr-fooevents-export';
-	const PER_PAGE  = 20;
+
+	/**
+	 * Erlaubte Werte für "Kurse pro Seite". 0 bedeutet "Alle".
+	 */
+	const PER_PAGE_OPTIONS = array( 20, 50, 100, 200, 0 );
+	const DEFAULT_PER_PAGE = 20;
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
@@ -45,6 +50,18 @@ class FGR_FE_Admin {
 		);
 	}
 
+	/**
+	 * Liest die gewählte Seitengröße; fällt auf DEFAULT_PER_PAGE zurück, falls
+	 * der Wert nicht zu den erlaubten Abstufungen gehört.
+	 */
+	public static function get_current_per_page() {
+		if ( ! isset( $_GET['fgr_fe_per_page'] ) ) {
+			return self::DEFAULT_PER_PAGE;
+		}
+		$value = absint( $_GET['fgr_fe_per_page'] );
+		return in_array( $value, self::PER_PAGE_OPTIONS, true ) ? $value : self::DEFAULT_PER_PAGE;
+	}
+
 	public function render_page() {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_die( esc_html__( 'Keine Berechtigung für diese Seite.', 'fgr-fooevents-export' ) );
@@ -55,12 +72,20 @@ class FGR_FE_Admin {
 		$courses  = FGR_FE_Data::get_course_options( $products );
 		$filters  = self::get_current_filters();
 
-		$groups = FGR_FE_Data::get_grouped_bookings( $filters );
+		$groups   = FGR_FE_Data::get_grouped_bookings( $filters );
+		$per_page = self::get_current_per_page();
 
-		$total_pages = max( 1, (int) ceil( count( $groups ) / self::PER_PAGE ) );
-		$paged       = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
-		$paged       = min( $paged, $total_pages );
-		$page_groups = array_slice( $groups, ( $paged - 1 ) * self::PER_PAGE, self::PER_PAGE );
+		if ( 0 === $per_page ) {
+			// "Alle" gewählt: keine Aufteilung in Seiten.
+			$total_pages = 1;
+			$paged       = 1;
+			$page_groups = $groups;
+		} else {
+			$total_pages = max( 1, (int) ceil( count( $groups ) / $per_page ) );
+			$paged       = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
+			$paged       = min( $paged, $total_pages );
+			$page_groups = array_slice( $groups, ( $paged - 1 ) * $per_page, $per_page );
+		}
 
 		$export_url = wp_nonce_url(
 			add_query_arg(

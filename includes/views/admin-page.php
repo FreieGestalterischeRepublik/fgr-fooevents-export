@@ -3,7 +3,7 @@
  * View: Kurs-Übersicht.
  *
  * Erwartet folgende Variablen aus FGR_FE_Admin::render_page():
- * $products, $months, $courses, $filters, $groups, $page_groups, $paged, $total_pages, $export_url
+ * $products, $months, $courses, $filters, $groups, $page_groups, $paged, $total_pages, $per_page, $export_url
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -30,6 +30,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php foreach ( $courses as $product_id => $label ) : ?>
 				<option value="<?php echo esc_attr( $product_id ); ?>" <?php selected( $filters['course'], $product_id ); ?>>
 					<?php echo esc_html( $label ); ?>
+				</option>
+			<?php endforeach; ?>
+		</select>
+
+		<select name="fgr_fe_per_page">
+			<?php foreach ( FGR_FE_Admin::PER_PAGE_OPTIONS as $option ) : ?>
+				<option value="<?php echo esc_attr( $option ); ?>" <?php selected( $per_page, $option ); ?>>
+					<?php
+					echo 0 === $option
+						? esc_html__( 'Alle anzeigen', 'fgr-fooevents-export' )
+						/* translators: %d: Anzahl der Kurse pro Seite */
+						: esc_html( sprintf( __( '%d pro Seite', 'fgr-fooevents-export' ), $option ) );
+					?>
 				</option>
 			<?php endforeach; ?>
 		</select>
