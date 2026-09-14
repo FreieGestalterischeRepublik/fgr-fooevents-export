@@ -46,6 +46,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<a href="<?php echo esc_url( $export_url_csv ); ?>" class="button">
 				<?php esc_html_e( 'Als CSV exportieren', 'fgr-fooevents-export' ); ?>
 			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . FGR_FE_Settings::PAGE_SLUG ) ); ?>" class="fgr-fe-settings-link">
+				<?php esc_html_e( 'Export-Einstellungen', 'fgr-fooevents-export' ); ?>
+			</a>
 		</div>
 
 	<?php if ( empty( $groups ) ) : ?>

@@ -129,10 +129,13 @@ class FGR_FE_Xlsx_Writer {
 		$xml .= '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
 
 		$xml .= '<cols>';
+		// Feste Breiten für die Standardspalten, weitere (optionale) Spalten bekommen
+		// eine praktikable Standardbreite statt keine Breite (= Excel-Minimalbreite).
 		$widths = array( 12, 8, 30, 14, 22, 28, 16, 14, 18 );
-		foreach ( $widths as $i => $width ) {
-			$col  = $i + 1;
-			$xml .= '<col min="' . $col . '" max="' . $col . '" width="' . $width . '" customWidth="1"/>';
+		foreach ( $header as $i => $label ) {
+			$width = isset( $widths[ $i ] ) ? $widths[ $i ] : 22;
+			$col   = $i + 1;
+			$xml  .= '<col min="' . $col . '" max="' . $col . '" width="' . $width . '" customWidth="1"/>';
 		}
 		$xml .= '</cols>';
 

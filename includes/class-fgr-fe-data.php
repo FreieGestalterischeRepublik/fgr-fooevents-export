@@ -103,12 +103,90 @@ class FGR_FE_Data {
 	}
 
 	/**
+	 * Übersetzt den FooEvents-Check-in-Status ins Deutsche. Unbekannte Werte
+	 * werden unverändert durchgereicht, statt sie zu verschlucken.
+	 */
+	private static function format_checkin_status( $raw ) {
+		$map = array(
+			'Not Checked In' => __( 'Nicht eingecheckt', 'fgr-fooevents-export' ),
+			'Checked in'     => __( 'Eingecheckt', 'fgr-fooevents-export' ),
+			'Canceled'       => __( 'Storniert', 'fgr-fooevents-export' ),
+		);
+		return isset( $map[ $raw ] ) ? $map[ $raw ] : $raw;
+	}
+
+	/**
+	 * FooEvents speichert den Ticket-Preis als HTML-Schnipsel
+	 * (z. B. "<span ...><bdi>129,00&nbsp;<span ...>€</span></bdi></span>").
+	 * Für den Export auf reinen Text reduzieren.
+	 */
+	private static function format_ticket_price( $raw_html ) {
+		$text = wp_strip_all_tags( $raw_html );
+		$text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' ); // &nbsp;, &euro; etc.
+		$text = str_replace( "\xc2\xa0", ' ', $text ); // geschütztes Leerzeichen
+		return trim( preg_replace( '/\s+/', ' ', $text ) );
+	}
+
+	private static function format_billing_address( $order ) {
+		$parts = array_filter(
+			array(
+				$order->get_billing_address_1(),
+				trim( $order->get_billing_postcode() . ' ' . $order->get_billing_city() ),
+			)
+		);
+		return implode( ', ', $parts );
+	}
+
+	/**
+	 * Liest ein einzelnes Zusatzfeld aus Ticket-Meta (Felder, die pro Ticket
+	 * feststehen, unabhängig von der zugehörigen Bestellung).
+	 */
+	private static function get_ticket_extra_value( $field, $ticket_id ) {
+		switch ( $field ) {
+			case 'checkin_status':
+				return self::format_checkin_status( get_post_meta( $ticket_id, 'WooCommerceEventsStatus', true ) );
+			case 'ticket_price':
+				return self::format_ticket_price( get_post_meta( $ticket_id, 'WooCommerceEventsPrice', true ) );
+			case 'attendee_company':
+				return get_post_meta( $ticket_id, 'WooCommerceEventsAttendeeCompany', true );
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * Liest ein einzelnes Zusatzfeld aus der (bereits gebündelt geladenen) Bestellung.
+	 */
+	private static function get_order_extra_value( $field, $order ) {
+		if ( ! $order ) {
+			return '';
+		}
+		switch ( $field ) {
+			case 'order_date':
+				$date = $order->get_date_created();
+				return $date ? $date->date_i18n( 'd.m.Y H:i' ) : '';
+			case 'payment_method':
+				return $order->get_payment_method_title();
+			case 'coupon_code':
+				return implode( ', ', $order->get_coupon_codes() );
+			case 'order_note':
+				return $order->get_customer_note();
+			case 'billing_address':
+				return self::format_billing_address( $order );
+			default:
+				return null;
+		}
+	}
+
+	/**
 	 * Tickets + zugehörige Bestellungen gebündelt laden (kein N+1: eine Ticket-Query,
 	 * ein Meta-Cache-Priming, eine Bestell-Query für alle betroffenen Order-IDs).
 	 *
+	 * @param int[]    $product_ids
+	 * @param string[] $extra_fields Optionale Zusatzspalten (siehe FGR_FE_Settings).
 	 * @return array product_id => array von Zeilen-Objekten
 	 */
-	private static function get_rows_by_product( array $product_ids ) {
+	private static function get_rows_by_product( array $product_ids, array $extra_fields = array() ) {
 		if ( empty( $product_ids ) ) {
 			return array();
 		}
@@ -177,6 +255,13 @@ class FGR_FE_Data {
 				'phone'      => $phone,
 			);
 
+			foreach ( $extra_fields as $field ) {
+				$value = self::get_ticket_extra_value( $field, $ticket_id );
+				if ( null !== $value ) {
+					$row->$field = $value;
+				}
+			}
+
 			$tickets_by_order[ $order_id ][] = $row;
 			if ( $order_id ) {
 				$order_ids[ $order_id ] = $order_id;
@@ -212,6 +297,16 @@ class FGR_FE_Data {
 					$row->payment_label = __( 'Bestellung nicht gefunden', 'fgr-fooevents-export' );
 				}
 
+				foreach ( $extra_fields as $field ) {
+					if ( isset( $row->$field ) ) {
+						continue; // bereits als Ticket-Feld gesetzt.
+					}
+					$value = self::get_order_extra_value( $field, $order );
+					if ( null !== $value ) {
+						$row->$field = $value;
+					}
+				}
+
 				$rows_by_product[ $row->product_id ][] = $row;
 			}
 		}
@@ -221,14 +316,17 @@ class FGR_FE_Data {
 
 	/**
 	 * Gruppierte Buchungen für die Admin-Übersicht, aufsteigend nach Kurs-Datum.
+	 *
+	 * @param array    $filters
+	 * @param string[] $extra_fields Optionale Zusatzspalten für den Export (siehe FGR_FE_Settings).
 	 */
-	public static function get_grouped_bookings( array $filters = array() ) {
+	public static function get_grouped_bookings( array $filters = array(), array $extra_fields = array() ) {
 		$products = self::filter_products( self::get_event_products(), $filters );
 		if ( empty( $products ) ) {
 			return array();
 		}
 
-		$rows_by_product = self::get_rows_by_product( array_keys( $products ) );
+		$rows_by_product = self::get_rows_by_product( array_keys( $products ), $extra_fields );
 
 		$groups = array();
 		foreach ( $products as $product_id => $product ) {
@@ -252,13 +350,16 @@ class FGR_FE_Data {
 
 	/**
 	 * Flache, exportierbare Zeilenliste (eine Zeile pro Teilnehmer), nach Datum sortiert.
+	 *
+	 * @param array    $filters
+	 * @param string[] $extra_fields Optionale Zusatzspalten (siehe FGR_FE_Settings).
 	 */
-	public static function get_flat_rows( array $filters = array() ) {
+	public static function get_flat_rows( array $filters = array(), array $extra_fields = array() ) {
 		$rows = array();
 
-		foreach ( self::get_grouped_bookings( $filters ) as $group ) {
+		foreach ( self::get_grouped_bookings( $filters, $extra_fields ) as $group ) {
 			foreach ( $group->participants as $participant ) {
-				$rows[] = (object) array(
+				$row = (object) array(
 					'date_display'  => $group->product->date_display,
 					'time_display'  => $group->product->time_display,
 					'course_name'   => $group->product->name,
@@ -269,6 +370,12 @@ class FGR_FE_Data {
 					'order_number'  => $participant->order_number,
 					'payment_label' => $participant->payment_label,
 				);
+
+				foreach ( $extra_fields as $field ) {
+					$row->$field = isset( $participant->$field ) ? $participant->$field : '';
+				}
+
+				$rows[] = $row;
 			}
 		}
 

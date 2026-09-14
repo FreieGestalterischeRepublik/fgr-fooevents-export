@@ -2,7 +2,7 @@
 /**
  * Plugin Name: FGR FooEventsExport
  * Description: Admin-Übersicht aller FooEvents-Kochkurse, gruppiert nach Kurs-Datum, mit Filtern und CSV-Export.
- * Version: 1.3.1
+ * Version: 1.4.0
  * Author: FGR
  * Text Domain: fgr-fooevents-export
  * Requires Plugins: woocommerce
@@ -13,13 +13,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'FGR_FE_VERSION', '1.3.1' );
+define( 'FGR_FE_VERSION', '1.4.0' );
 define( 'FGR_FE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'FGR_FE_URL', plugin_dir_url( __FILE__ ) );
 define( 'FGR_FE_GITHUB_REPO', 'https://github.com/FreieGestalterischeRepublik/fgr-fooevents-export' );
 
 require_once FGR_FE_PATH . 'vendor/plugin-update-checker/plugin-update-checker.php';
 require_once FGR_FE_PATH . 'includes/class-fgr-fe-data.php';
+require_once FGR_FE_PATH . 'includes/class-fgr-fe-settings.php';
 require_once FGR_FE_PATH . 'includes/class-fgr-fe-admin.php';
 require_once FGR_FE_PATH . 'includes/class-fgr-fe-xlsx-writer.php';
 require_once FGR_FE_PATH . 'includes/class-fgr-fe-export.php';
@@ -68,6 +69,7 @@ add_action(
 		}
 
 		new FGR_FE_Admin();
+		new FGR_FE_Settings();
 		new FGR_FE_Export();
 	}
 );
