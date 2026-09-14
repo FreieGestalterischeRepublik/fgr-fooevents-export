@@ -1,0 +1,36 @@
+.fgr-fe-filters {
+	margin: 1em 0;
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.fgr-fe-groups {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.fgr-fe-group {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 0;
+}
+
+.fgr-fe-group summary {
+	padding: 10px 14px;
+	cursor: pointer;
+	font-size: 14px;
+	list-style: revert;
+}
+
+.fgr-fe-group[open] summary {
+	border-bottom: 1px solid #c3c4c7;
+}
+
+.fgr-fe-table {
+	border: none;
+	margin: 0;
+}
