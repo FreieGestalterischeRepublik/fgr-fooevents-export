@@ -13,48 +13,36 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap fgr-fe-wrap">
 	<h1><?php esc_html_e( 'Kurs-Übersicht', 'fgr-fooevents-export' ); ?></h1>
 
-	<form method="get" class="fgr-fe-filters">
+	<form method="get">
 		<input type="hidden" name="page" value="<?php echo esc_attr( FGR_FE_Admin::PAGE_SLUG ); ?>">
 
-		<select name="fgr_fe_month">
-			<option value=""><?php esc_html_e( 'Alle Monate', 'fgr-fooevents-export' ); ?></option>
-			<?php foreach ( $months as $key => $label ) : ?>
-				<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $filters['month'], $key ); ?>>
-					<?php echo esc_html( $label ); ?>
-				</option>
-			<?php endforeach; ?>
-		</select>
+		<div class="fgr-fe-filters">
+			<select name="fgr_fe_month">
+				<option value=""><?php esc_html_e( 'Alle Monate', 'fgr-fooevents-export' ); ?></option>
+				<?php foreach ( $months as $key => $label ) : ?>
+					<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $filters['month'], $key ); ?>>
+						<?php echo esc_html( $label ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
 
-		<select name="fgr_fe_course">
-			<option value=""><?php esc_html_e( 'Alle Kurse', 'fgr-fooevents-export' ); ?></option>
-			<?php foreach ( $courses as $product_id => $label ) : ?>
-				<option value="<?php echo esc_attr( $product_id ); ?>" <?php selected( $filters['course'], $product_id ); ?>>
-					<?php echo esc_html( $label ); ?>
-				</option>
-			<?php endforeach; ?>
-		</select>
+			<select name="fgr_fe_course">
+				<option value=""><?php esc_html_e( 'Alle Kurse', 'fgr-fooevents-export' ); ?></option>
+				<?php foreach ( $courses as $product_id => $label ) : ?>
+					<option value="<?php echo esc_attr( $product_id ); ?>" <?php selected( $filters['course'], $product_id ); ?>>
+						<?php echo esc_html( $label ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
 
-		<select name="fgr_fe_per_page">
-			<?php foreach ( FGR_FE_Admin::PER_PAGE_OPTIONS as $option ) : ?>
-				<option value="<?php echo esc_attr( $option ); ?>" <?php selected( $per_page, $option ); ?>>
-					<?php
-					echo 0 === $option
-						? esc_html__( 'Alle anzeigen', 'fgr-fooevents-export' )
-						/* translators: %d: Anzahl der Kurse pro Seite */
-						: esc_html( sprintf( __( '%d pro Seite', 'fgr-fooevents-export' ), $option ) );
-					?>
-				</option>
-			<?php endforeach; ?>
-		</select>
-
-		<button type="submit" class="button"><?php esc_html_e( 'Filtern', 'fgr-fooevents-export' ); ?></button>
-		<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . FGR_FE_Admin::PAGE_SLUG ) ); ?>" class="button">
-			<?php esc_html_e( 'Zurücksetzen', 'fgr-fooevents-export' ); ?>
-		</a>
-		<a href="<?php echo esc_url( $export_url ); ?>" class="button button-primary">
-			<?php esc_html_e( 'Als CSV exportieren', 'fgr-fooevents-export' ); ?>
-		</a>
-	</form>
+			<button type="submit" class="button"><?php esc_html_e( 'Filtern', 'fgr-fooevents-export' ); ?></button>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . FGR_FE_Admin::PAGE_SLUG ) ); ?>" class="button">
+				<?php esc_html_e( 'Zurücksetzen', 'fgr-fooevents-export' ); ?>
+			</a>
+			<a href="<?php echo esc_url( $export_url ); ?>" class="button button-primary">
+				<?php esc_html_e( 'Als CSV exportieren', 'fgr-fooevents-export' ); ?>
+			</a>
+		</div>
 
 	<?php if ( empty( $groups ) ) : ?>
 
@@ -116,8 +104,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php endforeach; ?>
 		</div>
 
-		<?php if ( $total_pages > 1 ) : ?>
-			<div class="tablenav">
+		<div class="tablenav fgr-fe-bottom-bar">
+			<?php if ( $total_pages > 1 ) : ?>
 				<div class="tablenav-pages">
 					<?php
 					echo wp_kses_post(
@@ -132,8 +120,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 					);
 					?>
 				</div>
+			<?php endif; ?>
+
+			<div class="fgr-fe-per-page">
+				<label for="fgr_fe_per_page"><?php esc_html_e( 'Kurse pro Seite:', 'fgr-fooevents-export' ); ?></label>
+				<select name="fgr_fe_per_page" id="fgr_fe_per_page">
+					<?php foreach ( FGR_FE_Admin::PER_PAGE_OPTIONS as $option ) : ?>
+						<option value="<?php echo esc_attr( $option ); ?>" <?php selected( $per_page, $option ); ?>>
+							<?php
+							echo 0 === $option
+								? esc_html__( 'Alle', 'fgr-fooevents-export' )
+								: esc_html( $option );
+							?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+				<button type="submit" class="button"><?php esc_html_e( 'Anzeigen', 'fgr-fooevents-export' ); ?></button>
 			</div>
-		<?php endif; ?>
+		</div>
 
 	<?php endif; ?>
+	</form>
 </div>

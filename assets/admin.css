@@ -34,3 +34,19 @@
 	border: none;
 	margin: 0;
 }
+
+.fgr-fe-bottom-bar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.fgr-fe-per-page {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-left: auto;
+}
