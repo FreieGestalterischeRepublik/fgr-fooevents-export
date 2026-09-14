@@ -27,7 +27,7 @@ class FGR_FE_Admin {
 			'woocommerce',
 			__( 'Kurs-Übersicht', 'fgr-fooevents-export' ),
 			__( 'Kurs-Übersicht', 'fgr-fooevents-export' ),
-			'manage_woocommerce',
+			'manage_options',
 			self::PAGE_SLUG,
 			array( $this, 'render_page' )
 		);
@@ -88,7 +88,7 @@ class FGR_FE_Admin {
 	}
 
 	public function render_page() {
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Keine Berechtigung für diese Seite.', 'fgr-fooevents-export' ) );
 		}
 

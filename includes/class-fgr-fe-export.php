@@ -36,7 +36,7 @@ class FGR_FE_Export {
 	}
 
 	public function handle_export() {
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Keine Berechtigung für diesen Export.', 'fgr-fooevents-export' ) );
 		}
 

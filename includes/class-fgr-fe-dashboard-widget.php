@@ -16,7 +16,7 @@ class FGR_FE_Dashboard_Widget {
 	}
 
 	public function register() {
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 		wp_add_dashboard_widget(

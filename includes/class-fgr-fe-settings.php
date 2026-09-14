@@ -206,7 +206,7 @@ class FGR_FE_Settings {
 			'woocommerce',
 			__( 'Export-Einstellungen', 'fgr-fooevents-export' ),
 			__( 'Export-Einstellungen', 'fgr-fooevents-export' ),
-			'manage_woocommerce',
+			'manage_options',
 			self::PAGE_SLUG,
 			array( $this, 'render_page' )
 		);
@@ -264,7 +264,7 @@ class FGR_FE_Settings {
 	}
 
 	public function render_page() {
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Keine Berechtigung für diese Seite.', 'fgr-fooevents-export' ) );
 		}
 
