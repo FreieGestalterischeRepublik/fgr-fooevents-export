@@ -1,6 +1,9 @@
 <?php
 /**
  * Export der aktuell gefilterten Kurs-Übersicht als XLSX (Standard) oder CSV.
+ *
+ * Welche Spalten in welcher Reihenfolge enthalten sind, kommt aus
+ * FGR_FE_Settings (Seite "Export-Einstellungen").
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -9,47 +12,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class FGR_FE_Export {
 
-	private static function get_columns( array $extra_fields ) {
-		$columns = array(
-			__( 'Kurs-Datum', 'fgr-fooevents-export' ),
-			__( 'Uhrzeit', 'fgr-fooevents-export' ),
-			__( 'Kursname', 'fgr-fooevents-export' ),
-			__( 'SKU', 'fgr-fooevents-export' ),
-			__( 'Teilnehmer-Name', 'fgr-fooevents-export' ),
-			__( 'E-Mail', 'fgr-fooevents-export' ),
-			__( 'Telefon', 'fgr-fooevents-export' ),
-			__( 'Bestellnummer', 'fgr-fooevents-export' ),
-			__( 'Zahlungsstatus', 'fgr-fooevents-export' ),
-		);
-
-		$definitions = FGR_FE_Settings::get_field_definitions();
-		foreach ( $extra_fields as $field ) {
-			if ( isset( $definitions[ $field ] ) ) {
-				$columns[] = $definitions[ $field ]['label'];
+	private static function get_column_labels( array $columns ) {
+		$definitions = FGR_FE_Settings::get_all_columns();
+		$labels      = array();
+		foreach ( $columns as $key ) {
+			if ( isset( $definitions[ $key ] ) ) {
+				$labels[] = $definitions[ $key ]['label'];
 			}
 		}
-
-		return $columns;
+		return $labels;
 	}
 
-	private static function row_to_columns( $row, array $extra_fields ) {
-		$columns = array(
-			$row->date_display,
-			$row->time_display,
-			$row->course_name,
-			$row->sku,
-			$row->name,
-			$row->email,
-			$row->phone,
-			$row->order_number,
-			$row->payment_label,
-		);
-
-		foreach ( $extra_fields as $field ) {
-			$columns[] = isset( $row->$field ) ? $row->$field : '';
+	private static function row_to_columns( $row, array $columns ) {
+		$values = array();
+		foreach ( $columns as $key ) {
+			$values[] = isset( $row->$key ) ? $row->$key : '';
 		}
-
-		return $columns;
+		return $values;
 	}
 
 	public function __construct() {
@@ -64,31 +43,32 @@ class FGR_FE_Export {
 		check_admin_referer( 'fgr_fe_export', 'fgr_fe_nonce' );
 
 		$filters      = FGR_FE_Admin::get_current_filters();
-		$extra_fields = FGR_FE_Settings::get_enabled_fields();
+		$columns      = FGR_FE_Settings::get_enabled_columns();
+		$extra_fields = FGR_FE_Settings::get_enabled_extra_fields();
 		$rows         = FGR_FE_Data::get_flat_rows( $filters, $extra_fields );
 		$format       = isset( $_GET['format'] ) && 'csv' === $_GET['format'] ? 'csv' : 'xlsx';
 
 		if ( 'csv' === $format ) {
-			$this->output_csv( $rows, $extra_fields );
+			$this->output_csv( $rows, $columns );
 		} else {
-			$this->output_xlsx( $rows, $extra_fields );
+			$this->output_xlsx( $rows, $columns );
 		}
 	}
 
-	private function output_xlsx( array $rows, array $extra_fields ) {
+	private function output_xlsx( array $rows, array $columns ) {
 		$data = array();
 		foreach ( $rows as $row ) {
-			$data[] = self::row_to_columns( $row, $extra_fields );
+			$data[] = self::row_to_columns( $row, $columns );
 		}
 
 		FGR_FE_Xlsx_Writer::output(
 			'kurs-uebersicht-' . gmdate( 'Y-m-d' ) . '.xlsx',
-			self::get_columns( $extra_fields ),
+			self::get_column_labels( $columns ),
 			$data
 		);
 	}
 
-	private function output_csv( array $rows, array $extra_fields ) {
+	private function output_csv( array $rows, array $columns ) {
 		while ( ob_get_level() ) {
 			ob_end_clean();
 		}
@@ -102,10 +82,10 @@ class FGR_FE_Export {
 		// UTF-8-BOM, damit Excel Umlaute korrekt anzeigt.
 		fwrite( $output, "\xEF\xBB\xBF" );
 
-		fputcsv( $output, self::get_columns( $extra_fields ), ';' );
+		fputcsv( $output, self::get_column_labels( $columns ), ';' );
 
 		foreach ( $rows as $row ) {
-			fputcsv( $output, self::row_to_columns( $row, $extra_fields ), ';' );
+			fputcsv( $output, self::row_to_columns( $row, $columns ), ';' );
 		}
 
 		fclose( $output );

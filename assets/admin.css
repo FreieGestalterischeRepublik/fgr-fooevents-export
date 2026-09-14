@@ -58,3 +58,13 @@
 .fgr-fe-settings-table td {
 	vertical-align: middle;
 }
+
+.fgr-fe-order-buttons {
+	white-space: nowrap;
+}
+
+.fgr-fe-order-buttons .button-small {
+	padding: 0 6px;
+	line-height: 2.15;
+	min-height: 26px;
+}
