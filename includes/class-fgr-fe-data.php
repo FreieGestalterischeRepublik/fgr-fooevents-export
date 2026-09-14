@@ -87,7 +87,25 @@ class FGR_FE_Data {
 		return $courses;
 	}
 
+	/**
+	 * Blendet Kurse mit Datum in der Vergangenheit aus, außer $show_past ist true.
+	 * Per default (false) sind abgelaufene Kurse ausgeblendet.
+	 */
+	public static function filter_past( array $products, $show_past ) {
+		if ( $show_past ) {
+			return $products;
+		}
+		$now = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+		return array_filter(
+			$products,
+			function ( $product ) use ( $now ) {
+				return $product->timestamp >= $now;
+			}
+		);
+	}
+
 	private static function filter_products( array $products, array $filters ) {
+		$products = self::filter_past( $products, ! empty( $filters['show_past'] ) );
 		return array_filter(
 			$products,
 			function ( $product ) use ( $filters ) {

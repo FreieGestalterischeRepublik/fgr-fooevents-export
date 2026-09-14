@@ -36,6 +36,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php endforeach; ?>
 			</select>
 
+			<label class="fgr-fe-show-past">
+				<input type="checkbox" name="fgr_fe_show_past" value="1" <?php checked( $filters['show_past'] ); ?>>
+				<?php esc_html_e( 'Abgelaufene Kurse anzeigen', 'fgr-fooevents-export' ); ?>
+			</label>
+
 			<button type="submit" class="button"><?php esc_html_e( 'Filtern', 'fgr-fooevents-export' ); ?></button>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . FGR_FE_Admin::PAGE_SLUG ) ); ?>" class="button">
 				<?php esc_html_e( 'Zurücksetzen', 'fgr-fooevents-export' ); ?>

@@ -55,6 +55,12 @@
 	margin-left: auto;
 }
 
+.fgr-fe-show-past {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
 .fgr-fe-settings-table td {
 	vertical-align: middle;
 }

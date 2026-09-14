@@ -47,6 +47,8 @@ class FGR_FE_Admin {
 		return array(
 			'month'  => isset( $_GET['fgr_fe_month'] ) ? sanitize_text_field( wp_unslash( $_GET['fgr_fe_month'] ) ) : '',
 			'course' => isset( $_GET['fgr_fe_course'] ) ? absint( $_GET['fgr_fe_course'] ) : 0,
+			// Checkbox: nur vorhanden, wenn angehakt. Per default aus (abgelaufene Kurse ausgeblendet).
+			'show_past' => ! empty( $_GET['fgr_fe_show_past'] ),
 		);
 	}
 
@@ -79,6 +81,9 @@ class FGR_FE_Admin {
 		if ( ! empty( $filters['course'] ) ) {
 			$args['fgr_fe_course'] = $filters['course'];
 		}
+		if ( ! empty( $filters['show_past'] ) ) {
+			$args['fgr_fe_show_past'] = '1';
+		}
 
 		return wp_nonce_url(
 			add_query_arg( $args, admin_url( 'admin-post.php' ) ),
@@ -92,10 +97,15 @@ class FGR_FE_Admin {
 			wp_die( esc_html__( 'Keine Berechtigung für diese Seite.', 'fgr-fooevents-export' ) );
 		}
 
-		$products = FGR_FE_Data::get_event_products();
-		$months   = FGR_FE_Data::get_month_options( $products );
-		$courses  = FGR_FE_Data::get_course_options( $products );
 		$filters  = self::get_current_filters();
+		$products = FGR_FE_Data::get_event_products();
+
+		// Dropdown-Optionen folgen dem "abgelaufene Kurse anzeigen"-Schalter,
+		// aber nicht dem gewählten Monat/Kurs selbst (sonst könnte man die
+		// Auswahl nicht mehr wechseln).
+		$dropdown_products = FGR_FE_Data::filter_past( $products, $filters['show_past'] );
+		$months            = FGR_FE_Data::get_month_options( $dropdown_products );
+		$courses           = FGR_FE_Data::get_course_options( $dropdown_products );
 
 		$groups   = FGR_FE_Data::get_grouped_bookings( $filters );
 		$per_page = self::get_current_per_page();
