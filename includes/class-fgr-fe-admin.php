@@ -62,6 +62,23 @@ class FGR_FE_Admin {
 		return in_array( $value, self::PER_PAGE_OPTIONS, true ) ? $value : self::DEFAULT_PER_PAGE;
 	}
 
+	private static function build_export_url( array $filters, $format ) {
+		return wp_nonce_url(
+			add_query_arg(
+				array_merge(
+					array(
+						'action' => 'fgr_fe_export',
+						'format' => $format,
+					),
+					array_filter( $filters )
+				),
+				admin_url( 'admin-post.php' )
+			),
+			'fgr_fe_export',
+			'fgr_fe_nonce'
+		);
+	}
+
 	public function render_page() {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_die( esc_html__( 'Keine Berechtigung für diese Seite.', 'fgr-fooevents-export' ) );
@@ -87,17 +104,8 @@ class FGR_FE_Admin {
 			$page_groups = array_slice( $groups, ( $paged - 1 ) * $per_page, $per_page );
 		}
 
-		$export_url = wp_nonce_url(
-			add_query_arg(
-				array_merge(
-					array( 'action' => 'fgr_fe_export' ),
-					array_filter( $filters )
-				),
-				admin_url( 'admin-post.php' )
-			),
-			'fgr_fe_export',
-			'fgr_fe_nonce'
-		);
+		$export_url_xlsx = self::build_export_url( $filters, 'xlsx' );
+		$export_url_csv  = self::build_export_url( $filters, 'csv' );
 
 		include FGR_FE_PATH . 'includes/views/admin-page.php';
 	}

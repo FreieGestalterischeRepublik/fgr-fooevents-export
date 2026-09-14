@@ -3,7 +3,8 @@
  * View: Kurs-Übersicht.
  *
  * Erwartet folgende Variablen aus FGR_FE_Admin::render_page():
- * $products, $months, $courses, $filters, $groups, $page_groups, $paged, $total_pages, $per_page, $export_url
+ * $products, $months, $courses, $filters, $groups, $page_groups, $paged, $total_pages, $per_page,
+ * $export_url_xlsx, $export_url_csv
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -39,7 +40,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . FGR_FE_Admin::PAGE_SLUG ) ); ?>" class="button">
 				<?php esc_html_e( 'Zurücksetzen', 'fgr-fooevents-export' ); ?>
 			</a>
-			<a href="<?php echo esc_url( $export_url ); ?>" class="button button-primary">
+			<a href="<?php echo esc_url( $export_url_xlsx ); ?>" class="button button-primary">
+				<?php esc_html_e( 'Als Excel exportieren', 'fgr-fooevents-export' ); ?>
+			</a>
+			<a href="<?php echo esc_url( $export_url_csv ); ?>" class="button">
 				<?php esc_html_e( 'Als CSV exportieren', 'fgr-fooevents-export' ); ?>
 			</a>
 		</div>
