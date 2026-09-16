@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  FGR FooEventsExport
  * Description:  Ein Plugin der Freien Gestalterischen Republik. Admin-Übersicht aller FooEvents-Kochkurse, gruppiert nach Kurs-Datum, mit Filtern und Excel-/CSV-Export.
- * Version:      1.7.1
+ * Version:      1.7.2
  * Author:       Freie Gestalterische Republik
  * Author URI:   https://fgr.design
  * License:      GPL-2.0-or-later

@@ -31,6 +31,28 @@ class FGR_FE_Export {
 		return $values;
 	}
 
+	/**
+	 * Schutz gegen CSV-/Formel-Injection (OWASP "CSV Injection"): Zellwerte, die
+	 * mit =, +, -, @ oder Tab beginnen, werden von Excel/LibreOffice als Formel
+	 * interpretiert. Da Name/Telefon/Notiz aus Kundeneingaben beim Checkout
+	 * stammen, koennte sonst z. B. ein bewusst als "Name" eingegebenes
+	 * "=HYPERLINK(...)" beim Oeffnen der CSV ausgefuehrt werden. Ein
+	 * fuehrendes Apostroph neutralisiert das, bleibt aber lesbar. Betrifft nur
+	 * den CSV-Export - der XLSX-Export ist als Text-Zelltyp (t="inlineStr")
+	 * bereits von sich aus dagegen sicher.
+	 */
+	private static function csv_safe( $value ) {
+		$value = (string) $value;
+		if ( '' !== $value && false !== strpos( "=+-@\t", $value[0] ) ) {
+			return "'" . $value;
+		}
+		return $value;
+	}
+
+	private static function csv_safe_row( array $values ) {
+		return array_map( array( __CLASS__, 'csv_safe' ), $values );
+	}
+
 	public function __construct() {
 		add_action( 'admin_post_fgr_fe_export', array( $this, 'handle_export' ) );
 	}
@@ -85,7 +107,7 @@ class FGR_FE_Export {
 		fputcsv( $output, self::get_column_labels( $columns ), ';' );
 
 		foreach ( $rows as $row ) {
-			fputcsv( $output, self::row_to_columns( $row, $columns ), ';' );
+			fputcsv( $output, self::csv_safe_row( self::row_to_columns( $row, $columns ) ), ';' );
 		}
 
 		fclose( $output );
